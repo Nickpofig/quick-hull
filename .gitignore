@@ -10,6 +10,6 @@
 !program.clang.build
 
 # Ignores all binary files
-!*.exe
-!*.dll
-!*.o
+*.exe
+*.dll
+*.o
