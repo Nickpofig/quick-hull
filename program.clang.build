@@ -1,0 +1,12 @@
+@Compiling...
+clang++ 
+
+--include-path ./source 
+
+./source/main.cpp
+./source/core.cpp
+./source/core.hpp
+./source/algorithm/quick_hull.cpp
+./source/algorithm/quick_hull.hpp
+
+-o ./quickhull.exe

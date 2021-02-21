@@ -8,5 +8,7 @@ int main(int argument_count, std::vector<std::string> arguments)
 
 	algorithm.run();
 
+	
+
 	return 0;
 }

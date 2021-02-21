@@ -1,0 +1,15 @@
+# Generally ignores everything except the files under the following directories
+/*
+
+!/source/
+!/dependencies/
+!.gitignore
+!.gitmodules
+!LICENSE
+!README.md
+!program.clang.build
+
+# Ignores all binary files
+!*.exe
+!*.dll
+!*.o

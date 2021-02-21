@@ -1,6 +1,6 @@
 #pragma once
 
-class Quick_Hull
+struct Quick_Hull
 {
 	public:
 		void run(); 
