@@ -1,7 +1,27 @@
 #pragma once
 
-struct Quick_Hull
+#include <vector>
+#include "core.hpp"
+
+namespace program 
 {
-	public:
-		void run(); 
-};
+	struct Quick_Hull
+	{
+		public:
+			std::vector<Vector2> run(std::vector<Vector2> points);
+		private:
+			/// TODO: implement points flags 
+			// 0        -> uncertain
+			// positive -> outside   (convex hull)
+			// negative -> inside    (processed point)
+			std::vector<char> point_flags;
+		
+			void grow
+			(
+				Vector2 a, 
+				Vector2 b, 
+				std::vector<Vector2> &points, 
+				std::vector<Vector2> &convex_hull
+			);
+	};
+}

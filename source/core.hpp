@@ -20,18 +20,34 @@ namespace program
 
 
 	// Program's execution specific code
-	struct Point
+	struct Vector2
 	{
 		public:
 			double x;
 			double y;
 
-		Point(double x, double y);
+			Vector2(double x, double y);
+
+			// Subtracts other vector from this vector
+			Vector2 operator-(const Vector2 &other);
+			Vector2 operator+(const Vector2 &other);
+			bool operator==(const Vector2 &other);
+			bool operator!=(const Vector2 &other);
+
+			// Returns this vector's squared magnitude
+			double get_sqr_magnitude() const;
+
+			Vector2 get_conter_clockwise_normal() const;
 	};
+
+
+	extern double  sqr_distance(const Vector2 &point_a , const Vector2 &point_b);
+	extern double  dot_product (const Vector2 &vector_a, const Vector2 &vector_b);
+	extern Vector2 project     (const Vector2 &vector_a, const Vector2 &vector_b); 
 
 	extern void read_points_from_file
 	(
 		std::string const &filepath, 
-		std::vector<Point> &points
+		std::vector<Vector2> &points
 	);
 }

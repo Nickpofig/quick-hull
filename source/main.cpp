@@ -31,7 +31,7 @@ int main(int argument_count, char **arguments)
 	std::cout << "Testing file read..." << std::endl;
 
 	// Reads points
-	std::vector<Point> points;
+	std::vector<Vector2> points;
 	read_points_from_file(input_filepath, points);
 
 	/// TEST: prints read points
@@ -40,9 +40,17 @@ int main(int argument_count, char **arguments)
 		std::cout << "Point { x: " << point.x << ", y: " << point.y << " }" << std::endl;
 	}
 
+	std::cout << "Begin construction of convex hull..." << std::endl;
+	
 	// Runs algorithm
 	Quick_Hull algorithm;
-	algorithm.run();
+	auto convex_hull = algorithm.run(points);
+
+	std::cout << "Convex Hull:" << std::endl;
+	for (auto &point: convex_hull)
+	{
+		std::cout << "Point { x: " << point.x << ", y: " << point.y << " }" << std::endl;
+	}
 
 	return 0;
 }
