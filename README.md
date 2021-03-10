@@ -1,5 +1,5 @@
 # quick-hull
-A program that finds a sequence of points, which represents a "convex hull" for a given set of points, implemented using a parallelized "Quick-Hull" algorithm.
+WIP. A program that finds a sequence of points, which represents a "convex hull" for a given set of points, implemented using a parallelized "Quick-Hull" algorithm.
 
 # Compilation 
 To compile program you firstly need to compile system-run. 
