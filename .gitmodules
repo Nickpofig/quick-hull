@@ -1,3 +1,7 @@
 [submodule "dependencies/system-run"]
 	path = dependencies/system-run
 	url = git@github.com:Nickpofig/system-run.git
+
+[submodule "dependencies/boost/filesystem"]
+	path = dependencies/boost/filesystem
+	url = git@github.com:boostorg/filesystem.git
