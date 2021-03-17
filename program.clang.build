@@ -9,4 +9,6 @@ clang++
 ./source/core.cpp
 ./source/algorithm/quick_hull.cpp
 
+-fopenmp
+
 -o ./quickhull.exe

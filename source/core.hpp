@@ -1,7 +1,11 @@
 #pragma once
 
+// standard
 #include <vector>
 #include <string>
+
+// external
+#include "omp.h"
 
 namespace program 
 {
@@ -50,4 +54,22 @@ namespace program
 		std::string const &filepath, 
 		std::vector<Vector2> &points
 	);
+
+
+
+	
+	struct Thread_Logs 
+	{
+		private:
+			std::string *buffers;
+
+		public:
+			void init(int number_of_threads);
+			void flush();
+
+			template <typename T>
+			Thread_Logs& operator << (T any);
+	};
+
+	extern Thread_Logs thread_logs;
 }

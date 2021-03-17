@@ -97,6 +97,7 @@ namespace program
 		std::vector<Vector2> &points
 	)
 	{
+		
 		std::ifstream file_stream(filepath);
 		std::string line;
 
@@ -137,5 +138,37 @@ namespace program
 		}
 
 		file_stream.close();
+	}
+
+
+
+
+	Thread_Logs thread_logs;
+
+	void Thread_Logs::init(int number_of_threads)
+	{
+		buffers = new std::string[number_of_threads];
+	}
+
+	template <typename T>
+	Thread_Logs& Thread_Logs::operator<< (T any)
+	{
+		auto thread_id = omp_get_thread_num();
+		auto buffer = buffers[thread_id];
+		buffer.append(std::to_string(any));
+		return this;
+	}
+
+	void Thread_Logs::flush()
+	{
+		auto thread_id = omp_get_thread_num();
+		auto buffer = buffers[thread_id];
+		
+		std::cout << buffer << std::endl;
+
+		buffer.clear();
+		buffer.append("[");
+		buffer.append(std::to_string(thread_id));
+		buffer.append("] ");
 	}
 }

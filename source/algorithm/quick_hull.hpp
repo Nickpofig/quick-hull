@@ -16,12 +16,11 @@ namespace program
 			// negative -> inside    (processed point)
 			std::vector<char> point_flags;
 		
-			void grow
+			std::vector<Vector2> * grow
 			(
 				Vector2 a, 
 				Vector2 b, 
-				std::vector<Vector2> &points, 
-				std::vector<Vector2> &convex_hull
+				std::vector<Vector2> &points
 			);
 	};
 }

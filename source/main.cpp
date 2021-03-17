@@ -1,6 +1,11 @@
+// standard
 #include <iostream>
 #include <vector>
 
+// external
+#include "omp.h"
+
+// internal
 #include "core.hpp"
 #include "algorithm/quick_hull.hpp"
 
@@ -26,6 +31,9 @@ int main(int argument_count, char **arguments)
 	{
 		panic_begin << "An input file is missing!" << panic_end;
 	}
+
+	std::cout << "OpenMP: uses " << omp_get_max_threads() << " number of threads." << std::endl;
+	std::cout << "Main thread: " << omp_get_thread_num() << "." << std::endl;
 	
 	/// TEST: prints read points
 	std::cout << "Testing file read..." << std::endl;
@@ -41,7 +49,9 @@ int main(int argument_count, char **arguments)
 	}
 
 	std::cout << "Begin construction of convex hull..." << std::endl;
-	
+
+	thread_logs.init(omp_get_num_threads());
+
 	// Runs algorithm
 	Quick_Hull algorithm;
 	auto convex_hull = algorithm.run(points);
