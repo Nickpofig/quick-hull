@@ -232,8 +232,9 @@ void Program_Configuration::read()
 {
 	// Sets default parameters.
 	mode = Program_Mode::Algorithm_Execution;
-	log_level = Program_Log_Level::Quit;
+	log_level = Program_Log_Level::Silent;
 
+	// Defines mode
 	for (int index = 0; index < input.size; index++)
 	{
 		auto *argument = input.array[index];
@@ -243,9 +244,21 @@ void Program_Configuration::read()
 			algorithm = new Quick_Hull_Sequential();
 			mode = Program_Mode::Algorithm_Execution;
 			read_points_filepath();
-			return;
+			break;
 		}
-		else if (strcmp(argument, program_arguments_tag::thread_count.c_str()) == 0) 
+		else if (strcmp(argument, program_arguments_tag::points_generation.c_str()) == 0) 
+		{
+			read_points_generation_method(index + 1);
+			break;
+		}
+	}
+
+	// Defines other parameters...
+	for (int index = 0; index < input.size; index++) 
+	{
+		auto *argument = input.array[index];
+
+		if (strcmp(argument, program_arguments_tag::thread_count.c_str()) == 0) 
 		{
 			if (++index >= input.size) 
 			{
@@ -267,15 +280,14 @@ void Program_Configuration::read()
 		{
 			log_level = Program_Log_Level::Verbose;
 		}
-		else if (strcmp(argument, program_arguments_tag::points_generation.c_str()) == 0) 
+		else if (strcmp(argument, program_arguments_tag::log_quiet.c_str()) == 0) 
 		{
-			read_points_generation_method(index + 1);
-			return;
+			log_level = Program_Log_Level::Quiet;
 		}
 	}
 
 	// by default uses parallel implementation of the algorithm
-	if (!algorithm)
+	if (!algorithm && mode == Program_Mode::Algorithm_Execution)
 	{
 		algorithm = new Quick_Hull_OpenMP();
 		read_points_filepath();
@@ -347,7 +359,8 @@ namespace program
 	Log_Stream& Log_Stream::operator<<(Log_Stream_End& end)
 	{
 		std::cout << stream.str() << std::endl;
-		stream.clear();
+		std::cout.flush();
+		stream.str(""); // I hate c++ for this
 		return *this;
 	}
 }

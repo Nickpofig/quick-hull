@@ -1,24 +1,16 @@
+
+// standard
+#include <functional>
 #include <iostream>
 #include <fstream>
 #include <random>
 #include <cerrno>
 
+// internal
 #include "core.hpp"
 
 namespace quick_hull 
 {
-	// Program's general utility code
-	Panic_Message     panic_begin;
-	Panic_Message_End panic_end;
-
-	Panic_Message& Panic_Message::operator<<(Panic_Message_End& end)
-	{
-		std::cerr << std::endl;
-		exit(EXIT_FAILURE);
-		return *this;
-	}
-
-
 	// Program's execution specific code
 	Vector2::Vector2(double x, double y) : x(x), y(y) {   }
 
@@ -63,6 +55,14 @@ namespace quick_hull
 	double Vector2::get_magnitude() const 
 	{
 		return std::sqrt(get_sqr_magnitude());
+	}
+
+	size_t Vector2::get_hash() const
+	{
+		size_t x_hash = std::hash<double>{}(this->x);
+		size_t y_hash = std::hash<double>{}(this->y);
+
+		return x_hash ^ (y_hash << 1);
 	}
 
 	Vector2 Vector2::get_conter_clockwise_normal() const

@@ -9,25 +9,6 @@
 
 namespace quick_hull 
 {
-	// Program's general utility code
-	struct Panic_Message_End {   };
- 	struct Panic_Message
-	{
-		public:
-			template <typename T> 
-			Panic_Message& operator<<(T argument)
-			{
-				std::cerr << argument;
-				return *this;
-			}
-
-			Panic_Message& operator<< (Panic_Message_End& end);
-	};
-
-	extern Panic_Message     panic_begin;
-	extern Panic_Message_End panic_end;
-
-
 	// Program's execution specific code
 	struct Vector2
 	{
@@ -50,6 +31,7 @@ namespace quick_hull
 			// Returns this vector's squared magnitude
 			double get_sqr_magnitude() const;
 			double get_magnitude() const;
+			size_t get_hash() const;
 			Vector2 get_conter_clockwise_normal() const;
 			Vector2 get_normalized() const;
 

@@ -19,6 +19,7 @@ namespace program_arguments_tag
 	static const std::string help              = "--help";
 	static const std::string points_filepath   = "--file";
 	static const std::string log_verbose       = "--verbose";
+	static const std::string log_quiet         = "--quiet";
 	static const std::string file1             = "--file1"; // optional file
 
 	static const std::string sequential_mode   = "--sequential";
@@ -38,7 +39,8 @@ enum Program_Mode
 
 enum Program_Log_Level 
 {
-	Quit,
+	Silent,
+	Quiet,
 	Verbose
 };
 

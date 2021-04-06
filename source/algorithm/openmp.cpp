@@ -26,7 +26,6 @@ namespace quick_hull
 		// Finds the most left and right point
 		/// TODO: parallelize the above for loop
 		// #pragma omp parallel for shared(points)
-		#pragma omp simd
 		for (int index = 0; index < point_count; index++)
 		{
 			const auto &point = points.at(index);
@@ -95,9 +94,9 @@ namespace quick_hull
 		// Subsets of the given points, which lays on the conter clockwise normal side of the AB line.
 		auto *relative_points = new std::vector<Vector2>();
 
-		auto *dot_products = new std::vector<double>(); 
+		// auto *dot_products = new std::vector<double>(); 
 			// thread_datas.at(thread_id).dot_products;
-		auto *projection_distances = new std::vector<double>();
+		// auto *projection_distances = new std::vector<double>();
 			// thread_datas.at(thread_id).projection_distances;
 
 
@@ -111,16 +110,16 @@ namespace quick_hull
 			double relativity = dot_product(de, ab_normal);
 			double projection_sqr_magnitude = de.get_sqr_magnitude();
 			
-			dot_products->push_back(relativity);
-			projection_distances->push_back(projection_sqr_magnitude);
-		}
+			// dot_products->push_back(relativity);
+			// projection_distances->push_back(projection_sqr_magnitude);
+		// }
 
 
-		#pragma omp simd
-		for (int index = 0; index < point_count; index++)
-		{
-			double relativity = dot_products->at(index);
-			double projection_sqr_magnitude = projection_distances->at(index);
+		// #pragma omp simd
+		// for (int index = 0; index < point_count; index++)
+		// {
+			// double relativity = dot_products->at(index);
+			// double projection_sqr_magnitude = projection_distances->at(index);
 
 			if (relativity > 0)
 			{
@@ -136,8 +135,8 @@ namespace quick_hull
 			}
 		}
 
-		delete dot_products;
-		delete projection_distances;
+		// delete dot_products;
+		// delete projection_distances;
 
 		if (c != a && c != b)
 		{

@@ -24,13 +24,16 @@ int main(const int argument_count, const char **arguments)
 	// Gets program parameters (if any)
 	Program_Configuration program_config(arguments, argument_count);
 
+	bool log_is_quiet   = program_config.get_log_level() == Program_Log_Level::Quiet;
+	bool log_is_silent  = program_config.get_log_level() == Program_Log_Level::Silent;
 	bool log_is_verbose = program_config.get_log_level() == Program_Log_Level::Verbose;
+	bool must_execute_algorithm = program_config.get_program_mode() == Program_Mode::Algorithm_Execution;
 
-	if (program_config.get_program_mode() == Program_Mode::Algorithm_Execution)
+	if (must_execute_algorithm)
 	{
 		if (!program_config.is_using_sequential_algorithm())
 		{
-			if (log_is_verbose) 
+			if (log_is_verbose || log_is_quiet) 
 			{
 				program::log_begin << "Threads:\t" << omp_get_max_threads() << program::log_end;
 			}
@@ -38,6 +41,11 @@ int main(const int argument_count, const char **arguments)
 
 		auto &algorithm = program_config.get_algorithm();
 		auto &points = program_config.get_points();
+
+		if (log_is_quiet || log_is_verbose) 
+		{
+			program::log_begin << "Points:\t" << points.size() << program::log_end;
+		}
 
 		// Starts program runtime counting
 		auto stopwatch_start = std::chrono::steady_clock::now();
@@ -54,6 +62,8 @@ int main(const int argument_count, const char **arguments)
 			program::log_begin << "Convex Hull:" << program::log_end;
 		}
 		
+		size_t convex_hull_hash;
+
 		for (int index = 0, ch_size = convex_hull->size(); index < ch_size; index++)
 		{
 			auto &point = convex_hull->at(index);
@@ -62,14 +72,23 @@ int main(const int argument_count, const char **arguments)
 			{
 				program::log_begin << "\t{ x: " << point.x << ", y: " << point.y << " }" << program::log_end;
 			}
-			else // quit
+			else if (log_is_silent) // silent
 			{
 				program::log_begin << point.x << " " << point.y << program::log_end;
 			}
+			else if(log_is_quiet) 
+			{
+				convex_hull_hash ^= point.get_hash() << 1;
+			}
+		}
+
+		if (log_is_quiet)
+		{
+			program::log_begin << "Result hash: " << convex_hull_hash << program::log_end;
 		}
 
 		// Prints runtime
-		if (log_is_verbose) 
+		if (log_is_verbose || log_is_quiet) 
 		{
 			program::log_begin << "Runtime: " << std::chrono::duration<double, std::milli>(stopwatch_end - stopwatch_start).count() << " ms." << program::log_end;
 		}
@@ -80,10 +99,7 @@ int main(const int argument_count, const char **arguments)
 
 		for (const auto &point : *generated_points)
 		{
-			if (log_is_verbose)
-			{
-				program::log_begin << point.x << " " << point.y << program::log_end;
-			}
+			program::log_begin << point.x << " " << point.y << program::log_end;
 		}
 
 		delete generated_points;
