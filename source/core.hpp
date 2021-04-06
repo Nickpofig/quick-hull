@@ -7,7 +7,7 @@
 // external
 #include "omp.h"
 
-namespace program 
+namespace quick_hull 
 {
 	// Program's general utility code
 	struct Panic_Message_End {   };
@@ -15,7 +15,12 @@ namespace program
 	{
 		public:
 			template <typename T> 
-			Panic_Message& operator<< (T argument);
+			Panic_Message& operator<<(T argument)
+			{
+				std::cerr << argument;
+				return *this;
+			}
+
 			Panic_Message& operator<< (Panic_Message_End& end);
 	};
 
@@ -26,22 +31,29 @@ namespace program
 	// Program's execution specific code
 	struct Vector2
 	{
-		public:
+		public: // fields
 			double x;
 			double y;
 
+		public: // methods
 			Vector2(double x, double y);
+			Vector2() : Vector2(0, 0) { };
 
 			// Subtracts other vector from this vector
 			Vector2 operator-(const Vector2 &other);
 			Vector2 operator+(const Vector2 &other);
+			Vector2 operator/(const double number);
+			Vector2 operator/=(const double number);
 			bool operator==(const Vector2 &other);
 			bool operator!=(const Vector2 &other);
 
 			// Returns this vector's squared magnitude
 			double get_sqr_magnitude() const;
-
+			double get_magnitude() const;
 			Vector2 get_conter_clockwise_normal() const;
+			Vector2 get_normalized() const;
+
+			void normalize();
 	};
 
 
@@ -49,27 +61,5 @@ namespace program
 	extern double  dot_product (const Vector2 &vector_a, const Vector2 &vector_b);
 	extern Vector2 project     (const Vector2 &vector_a, const Vector2 &vector_b); 
 
-	extern void read_points_from_file
-	(
-		std::string const &filepath, 
-		std::vector<Vector2> &points
-	);
-
-
-
-	
-	struct Thread_Logs 
-	{
-		private:
-			std::string *buffers;
-
-		public:
-			void init(int number_of_threads);
-			void flush();
-
-			template <typename T>
-			Thread_Logs& operator << (T any);
-	};
-
-	extern Thread_Logs thread_logs;
+	extern std::vector<Vector2> * generate_points_in_circle(int count, Vector2 center, double outer_radius, double inner_radius);
 }

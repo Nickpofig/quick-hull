@@ -1,23 +1,17 @@
 #include <iostream>
 #include <fstream>
+#include <random>
 #include <cerrno>
 
 #include "core.hpp"
 
-namespace program 
+namespace quick_hull 
 {
 	// Program's general utility code
 	Panic_Message     panic_begin;
 	Panic_Message_End panic_end;
-	
-	template <typename T> 
-	Panic_Message& Panic_Message::operator<< (T argument)
-	{
-		std::cerr << argument;
-		return *this;
-	}
 
-	Panic_Message& Panic_Message::operator<< (Panic_Message_End& end)
+	Panic_Message& Panic_Message::operator<<(Panic_Message_End& end)
 	{
 		std::cerr << std::endl;
 		exit(EXIT_FAILURE);
@@ -48,14 +42,50 @@ namespace program
 		return !(*this == other);
 	}
 
+	Vector2 Vector2::operator/(const double number) 
+	{
+		auto x = this->x / number;
+		auto y = this->y / number;
+
+		return Vector2(x, y);
+	}
+
+	Vector2 Vector2::operator/=(const double number) 
+	{
+		return (*this) / number;
+	}
+
 	double Vector2::get_sqr_magnitude() const
 	{
 		return dot_product(*this, *this);
 	}
 
+	double Vector2::get_magnitude() const 
+	{
+		return std::sqrt(get_sqr_magnitude());
+	}
+
 	Vector2 Vector2::get_conter_clockwise_normal() const
 	{
 		return Vector2(-(this->y), this->x);
+	}
+
+	Vector2 Vector2::get_normalized() const 
+	{
+		auto copy = Vector2(*this);
+
+		copy.normalize();
+
+		return copy;
+	}
+
+	void Vector2::normalize()
+	{
+		double magnitude = this->get_magnitude();
+
+		/// WARNING: could break when magnitude is zero
+		this->x /= magnitude;
+		this->y /= magnitude;
 	}
 
 
@@ -90,85 +120,30 @@ namespace program
 		);
 	}
 
-
-	void read_points_from_file
-	(
-		std::string const &filepath, 
-		std::vector<Vector2> &points
-	)
+	std::vector<Vector2> * generate_points_in_circle(int count, Vector2 center, double outer_radius, double inner_radius)
 	{
-		
-		std::ifstream file_stream(filepath);
-		std::string line;
+		std::random_device random_device;
+		std::mt19937 generator(random_device());
+		std::uniform_real_distribution<double> distribution(-1.0, 1.0);
 
-		for(int line_number = 1; std::getline(file_stream, line); line_number++)
+		auto points = new std::vector<Vector2>();
+
+		for (int index = 0; index < count; index++) 
 		{
-			if (file_stream.bad())
-			{
-				panic_begin << "Failed to read file: (" << filepath << ")." << panic_end;
-			}
+			// Creates random vector
+			auto random_x = distribution(generator);
+			auto random_y = distribution(generator);
+			auto random_vector = Vector2(random_x, random_y).get_normalized();
 
-			char *next_start;
+			auto radius_range = outer_radius - inner_radius;
 
-			// BUG: 
-			// strtod does not read number if it reads non-number characters first. 
-			// It also returns 0 when it didn't read any number.
+			// Scales vector based on outer and inner radius, and shifts by center coordinates
+			random_vector.x = (random_vector.x * radius_range) + inner_radius + center.x;
+			random_vector.y = (random_vector.y * radius_range) + inner_radius + center.y;
 
-			double x = std::strtod(line.c_str(), &next_start);
-			if (errno) 
-			{
-				panic_begin 
-					<< "Failed to read (x) position of the point at the line " 
-					<< line_number 
-					<< " in the file: (" << filepath << ")"
-					<< panic_end;
-			}
-			
-			double y = std::strtod(next_start, &next_start);
-			if (errno) 
-			{
-				panic_begin 
-					<< "Failed to read (y) position of the point at the line " 
-					<< line_number 
-					<< " in the file (" << filepath << ")"
-					<< panic_end;
-			}
-
-			points.push_back(Vector2(x, y));
+			points->push_back(random_vector);
 		}
 
-		file_stream.close();
-	}
-
-
-
-
-	Thread_Logs thread_logs;
-
-	void Thread_Logs::init(int number_of_threads)
-	{
-		buffers = new std::string[number_of_threads];
-	}
-
-	template <typename T>
-	Thread_Logs& Thread_Logs::operator<< (T any)
-	{
-		auto thread_id = omp_get_thread_num();
-		auto buffer = buffers[thread_id];
-		buffer.append(std::to_string(any));
-		return this;
-	}
-
-	void Thread_Logs::flush()
-	{
-		auto thread_id = omp_get_thread_num();
-		auto buffer = buffers[thread_id];
-		
-		std::cout << buffer << std::endl;
-
-		buffer.clear();
-		buffer.append("[");
-		buffer.append(std::to_string(thread_id));
-		buffer.append("] ");
+		return points;
 	}
 }

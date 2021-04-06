@@ -7,8 +7,19 @@ clang++
 
 ./source/main.cpp
 ./source/core.cpp
-./source/algorithm/quick_hull.cpp
+./source/program.cpp
+./source/algorithm/base.cpp
+./source/algorithm/sequential.cpp
+./source/algorithm/openmp.cpp
+./source/utils/unicode.cpp
 
 -fopenmp
+
+-g
+
+# Temporarly turning off these warnings
+--define-macro _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+
+# -fsanitize=address
 
 -o ./quickhull.exe

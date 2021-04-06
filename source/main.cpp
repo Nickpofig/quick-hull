@@ -1,65 +1,92 @@
 // standard
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <chrono>
+#include <cmath>
+#include <cerrno>
+
 
 // external
 #include "omp.h"
 
 // internal
 #include "core.hpp"
-#include "algorithm/quick_hull.hpp"
+#include "algorithm/sequential.hpp"
+#include "algorithm/openmp.hpp"
+#include "program.hpp"
 
-using namespace program;
+using namespace quick_hull;
 
-int main(int argument_count, char **arguments) 
+
+int main(const int argument_count, const char **arguments) 
 {
-	std::string input_filepath;
-	
 	// Gets program parameters (if any)
-	for (int index = 1; index < argument_count; index++)
+	Program_Configuration program_config(arguments, argument_count);
+
+	bool log_is_verbose = program_config.get_log_level() == Program_Log_Level::Verbose;
+
+	if (program_config.get_program_mode() == Program_Mode::Algorithm_Execution)
 	{
-		if (strcmp(arguments[index], "--help") == 0)
+		if (!program_config.is_using_sequential_algorithm())
 		{
-			std::cout << "There is no help. Bye!" << std::endl;
-			exit(EXIT_SUCCESS);
+			if (log_is_verbose) 
+			{
+				program::log_begin << "Threads:\t" << omp_get_max_threads() << program::log_end;
+			}
 		}
-		else input_filepath = std::string(arguments[index]);
+
+		auto &algorithm = program_config.get_algorithm();
+		auto &points = program_config.get_points();
+
+		// Starts program runtime counting
+		auto stopwatch_start = std::chrono::steady_clock::now();
+
+		// Runs algorithm
+		auto *convex_hull = algorithm.run(points);
+
+		// Ends program runtime counting
+		auto stopwatch_end = std::chrono::steady_clock::now();
+
+		// Prints result
+		if(log_is_verbose)
+		{
+			program::log_begin << "Convex Hull:" << program::log_end;
+		}
+		
+		for (int index = 0, ch_size = convex_hull->size(); index < ch_size; index++)
+		{
+			auto &point = convex_hull->at(index);
+			
+			if (log_is_verbose)
+			{
+				program::log_begin << "\t{ x: " << point.x << ", y: " << point.y << " }" << program::log_end;
+			}
+			else // quit
+			{
+				program::log_begin << point.x << " " << point.y << program::log_end;
+			}
+		}
+
+		// Prints runtime
+		if (log_is_verbose) 
+		{
+			program::log_begin << "Runtime: " << std::chrono::duration<double, std::milli>(stopwatch_end - stopwatch_start).count() << " ms." << program::log_end;
+		}
 	}
-
-	// Asserts assignment of compulsory parameters
-	if (input_filepath.empty()) 
+	else 
 	{
-		panic_begin << "An input file is missing!" << panic_end;
-	}
+		auto *generated_points = program_config.get_points_generation_method().execute();
 
-	std::cout << "OpenMP: uses " << omp_get_max_threads() << " number of threads." << std::endl;
-	std::cout << "Main thread: " << omp_get_thread_num() << "." << std::endl;
-	
-	/// TEST: prints read points
-	std::cout << "Testing file read..." << std::endl;
+		for (const auto &point : *generated_points)
+		{
+			if (log_is_verbose)
+			{
+				program::log_begin << point.x << " " << point.y << program::log_end;
+			}
+		}
 
-	// Reads points
-	std::vector<Vector2> points;
-	read_points_from_file(input_filepath, points);
-
-	/// TEST: prints read points
-	for (auto &point : points)
-	{
-		std::cout << "Point { x: " << point.x << ", y: " << point.y << " }" << std::endl;
-	}
-
-	std::cout << "Begin construction of convex hull..." << std::endl;
-
-	thread_logs.init(omp_get_num_threads());
-
-	// Runs algorithm
-	Quick_Hull algorithm;
-	auto convex_hull = algorithm.run(points);
-
-	std::cout << "Convex Hull:" << std::endl;
-	for (auto &point: convex_hull)
-	{
-		std::cout << "Point { x: " << point.x << ", y: " << point.y << " }" << std::endl;
+		delete generated_points;
 	}
 
 	return 0;
