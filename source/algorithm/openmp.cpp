@@ -11,7 +11,11 @@
 
 namespace quick_hull 
 {
-	Quick_Hull_OpenMP::~Quick_Hull_OpenMP() { }
+	Quick_Hull_OpenMP::~Quick_Hull_OpenMP() 
+	{
+
+	}
+
 
 	std::vector<Vector2> * Quick_Hull_OpenMP::run(const std::vector<Vector2> &points)
 	{
@@ -23,9 +27,7 @@ namespace quick_hull
 		
 		int point_count = points.size();
 
-		// Finds the most left and right point
-		/// TODO: try parallelize the below for loop
-		// #pragma omp parallel for shared(points)
+		// Finds the most left and right point coordinates
 		for (int index = 0; index < point_count; index++)
 		{
 			const auto &point = points.at(index);
@@ -34,8 +36,7 @@ namespace quick_hull
 			{
 				most_right = point;
 			}
-			else
-			if (point.x < most_left.x || (point.x == most_right.x && point.y < most_right.y)) 
+			else if (point.x < most_left.x || (point.x == most_left.x && point.y < most_left.y)) 
 			{
 				most_left  = point;
 			}
@@ -105,13 +106,7 @@ namespace quick_hull
 			// point_count
 			);
 
-		// auto *dot_products = new std::vector<double>(); 
-			// thread_datas.at(thread_id).dot_products;
-		// auto *projection_distances = new std::vector<double>();
-			// thread_datas.at(thread_id).projection_distances;
 
-
-		// #pragma omp simd
 		for (int index = 0; index < point_count; index++)
 		{
 			auto e = points.at(index);
@@ -120,17 +115,6 @@ namespace quick_hull
 
 			double relativity = dot_product(de, ab_normal);
 			double projection_sqr_magnitude = de.get_sqr_magnitude();
-			
-			// dot_products->push_back(relativity);
-			// projection_distances->push_back(projection_sqr_magnitude);
-		// }
-
-
-		// #pragma omp simd
-		// for (int index = 0; index < point_count; index++)
-		// {
-			// double relativity = dot_products->at(index);
-			// double projection_sqr_magnitude = projection_distances->at(index);
 
 			if (relativity > 0)
 			{
@@ -145,9 +129,6 @@ namespace quick_hull
 				relative_points->push_back(e);
 			}
 		}
-
-		// delete dot_products;
-		// delete projection_distances;
 
 		if (c != a && c != b)
 		{
@@ -187,10 +168,4 @@ namespace quick_hull
 		
 		return convex_hull;
 	}
-
-
-	// 1 main 
-	// 8 threads : for loop
-	// 8 threads : recusrsion and task pooling
-
 }
