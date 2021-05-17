@@ -11,7 +11,6 @@ clang++
 ./source/algorithm/base.cpp
 ./source/algorithm/sequential.cpp
 ./source/algorithm/openmp.cpp
-./source/utils/unicode.cpp
 
 -fopenmp
 

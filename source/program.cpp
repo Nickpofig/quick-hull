@@ -6,7 +6,6 @@
 
 // internal
 #include "program.hpp"
-#include "utils/unicode.hpp"
 
 // Points_Generation_Method
 

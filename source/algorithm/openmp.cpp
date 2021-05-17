@@ -160,7 +160,7 @@ namespace quick_hull
 			// }
 			// else 
 			// {
-				#pragma omp task shared(convex_hull_left, relative_points, buffer)
+				#pragma omp task shared(convex_hull_left, relative_points)
 				{
 					convex_hull_left  = grow(a, c, *relative_points); // a convex hull from the AC line 
 				}
