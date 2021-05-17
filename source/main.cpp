@@ -48,13 +48,17 @@ int main(const int argument_count, const char **arguments)
 		}
 
 		// Starts program runtime counting
-		auto stopwatch_start = std::chrono::steady_clock::now();
+		auto stopwatch_start = 
+			// omp_get_wtime();
+			std::chrono::steady_clock::now();
 
 		// Runs algorithm
 		auto *convex_hull = algorithm.run(points);
 
 		// Ends program runtime counting
-		auto stopwatch_end = std::chrono::steady_clock::now();
+		auto stopwatch_end =
+			//  omp_get_wtime();
+			std::chrono::steady_clock::now();
 
 		// Prints result
 		if(log_is_verbose)
@@ -90,19 +94,15 @@ int main(const int argument_count, const char **arguments)
 		// Prints runtime
 		if (log_is_verbose || log_is_quiet) 
 		{
-			program::log_begin << "Runtime: " << std::chrono::duration<double, std::milli>(stopwatch_end - stopwatch_start).count() << " ms." << program::log_end;
+			program::log_begin << "Runtime: " 
+				<< std::chrono::duration<double, std::milli>(stopwatch_end - stopwatch_start).count() 
+				// << stopwatch_end - stopwatch_start
+			<< " ms." << program::log_end;
 		}
 	}
 	else 
 	{
-		auto *generated_points = program_config.get_points_generation_method().execute();
-
-		for (const auto &point : *generated_points)
-		{
-			program::log_begin << point.x << " " << point.y << program::log_end;
-		}
-
-		delete generated_points;
+		program_config.generate_and_write_points();
 	}
 
 	return 0;

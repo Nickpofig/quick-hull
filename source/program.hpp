@@ -31,6 +31,21 @@ namespace program_arguments_tag
 	static const std::string circle_center     = "--circle-center";
 };
 
+namespace program_arguments_definition 
+{
+	static const std::string help              = "Prints this information. [] - compulsory, () - optional parameter value.";
+	static const std::string points_filepath   = "Sets points filepath.";
+	static const std::string log_verbose        = "Sets log level: all.";
+	static const std::string log_quiet         = "Sets log level: minimum";
+
+	static const std::string sequential_mode   = "Marks that program will use sequential version of the Quickhull algorithm.";
+	static const std::string thread_count      = "Sets the maximum number of available threads. Should be equal to the amount of physical cores.";
+	
+	static const std::string points_generation = "Marks that program will generate points. Must have points method being provided.";
+	static const std::string points_count      = "Sets amount of points.";
+	static const std::string circle            = "Sets the points generation method: Circle, with outer and inner radius specified. Center offset could be specified after outer and inner parameters, by default offset is zero.";
+}
+
 enum Program_Mode 
 {
 	Algorithm_Execution,
@@ -106,6 +121,7 @@ struct Program_Configuration
 		std::vector<Vector2> readed_points;
 
 	private: // methods
+		void read_points();
 		void read_points_filepath();
 		void read_points_generation_method(int start_index);
 		void read();
@@ -117,10 +133,12 @@ struct Program_Configuration
 		const Program_Mode & get_program_mode() const;
 		const Program_Log_Level & get_log_level() const;
 		const std::vector<Vector2> & get_points() const;
+		const std::string & get_points_filepath() const;
 
 		Algorithm_Producing_Convex_Hull & get_algorithm() const;
 		Points_Generation_Method & get_points_generation_method() const;
 
+		void generate_and_write_points();
 		bool is_using_sequential_algorithm() const;
 };
 
@@ -144,6 +162,7 @@ namespace program
 
 	extern Panic_Message     panic_begin;
 	extern Panic_Message_End panic_end;
+	extern void print_help();
 
 
 	struct Log_Stream_End { };

@@ -1,6 +1,7 @@
 // standard
 #include <sstream>
 #include <string>
+#include <cstring>
 #include <stdlib.h>
 
 // internal
@@ -86,13 +87,13 @@ bool Circle_Points_Generation_Method::find()
 	// compolsury
 	if (!move_next()) 
 	{
-		program::panic_begin << "Error: <outer radius> value of <" << program_arguments_tag::circle << "> paramter is missing!" << program::panic_end;
+		program::panic_begin << "Error: <outer-radius> value of <" << program_arguments_tag::circle << "> paramter is missing!" << program::panic_end;
 	}
 	read_double(&outer_radius);
 
 	if (!move_next()) 
 	{
-		program::panic_begin << "Error: <inner radius> value of <" << program_arguments_tag::circle << "> parameter is missing!" << program::panic_end;
+		program::panic_begin << "Error: <inner-radius> value of <" << program_arguments_tag::circle << "> parameter is missing!" << program::panic_end;
 	}
 	read_double(&inner_radius);
 
@@ -118,7 +119,6 @@ std::vector<Vector2> * Circle_Points_Generation_Method::execute() const
 
 
 // Program_Configuration 
-
 void Program_Configuration::read_points_filepath()
 {
 	std::string filepath; 
@@ -142,74 +142,73 @@ void Program_Configuration::read_points_filepath()
 		program::panic_begin << "Error: <" << program_arguments_tag::points_filepath << "> parameter is missing!" << program::panic_end;
 	}
 
-	std::string content = encoding::heuristically_read_file(filepath); 
+	points_filepath = filepath;
+}
 
-	std::stringstream content_stream(content);
+void Program_Configuration::generate_and_write_points()
+{
+	auto *generated_points = points_generation_method->execute();
+	std::ofstream output(points_filepath, std::ios::out | std::ios::trunc | std::ios::binary);
 
-	while(!content_stream.eof()) 
+	int writted_point_count = 0;
+
+	if (log_level == Program_Log_Level::Verbose) 
+	{
+		std::cout << "generated point count: " << generated_points->size() << std::endl;
+	}
+
+	int generated_point_count = generated_points->size();
+	output << generated_point_count << std::endl;
+
+	for (const auto &point : *generated_points)
+	{
+		output << point.x << " " << point.y << std::endl;
+		output.flush();
+		writted_point_count++;
+	}
+
+	output.close();
+
+	if (log_level == Program_Log_Level::Verbose) 
+	{
+		std::cout << "writted point count: " << writted_point_count << std::endl;
+	}
+
+	delete generated_points;
+}
+
+void Program_Configuration::read_points()
+{
+	// std::string content = encoding::heuristically_read_file(filepath); 
+	// std::stringstream content_stream(content);
+
+	std::ifstream input(points_filepath, std::ios::in | std::ios::binary);
+
+	int point_count;
+
+	input >> point_count;
+
+	if (log_level == Program_Log_Level::Verbose) 
+	{
+		std::cout << "Point count to read: " << readed_points.size() << std::endl;
+	}
+
+	// while(!ifstream.eof()) 
+	for (int index = 0; index < point_count; index++)
 	{
 		double x, y;
 
-		content_stream >> std::skipws >> x >> std::skipws >> y;
+		// content_stream >> std::skipws >> x >> std::skipws >> y;
+
+		input >> x >> y;
 
 		readed_points.push_back(Vector2(x, y));
 	}
-	
-	// std::wifstream file_stream(filepath);
-	// std::string line;
 
-	// for(int line_number = 1; std::getline(file_stream, line); line_number++)
-	// while(!file_stream.eof())
-	// {
-	// 	if (file_stream.bad())
-	// 	{
-	// 		panic_begin << "Failed to read file: (" << filepath << ")." << panic_end;
-	// 	}
-
-	// 	// BUG: 
-	// 	// strtod does not read number if it reads non-number characters first. 
-	// 	// It also returns 0 when it didn't read any number.
-
-	// 	// {
-	// 	// 	std::stringstream log;
-	// 	// 	log << "Readed line: " << line << std::endl;
-	// 	// 	std::cout << log.str();
-	// 	// 	std::cout.flush();
-	// 	// }
-
-	// 	char *next_start;
-	// 	double x, y;
-
-	// 	// x = std::strtod(line.c_str(), &next_start);
-	// 	file_stream >>  x >>  y;
-		
-	// 	{
-	// 		std::stringstream log;
-	// 		log << "Readed x: " << x << ", y: " << y << std::endl;
-	// 		std::cout << log.str();
-	// 		std::cout.flush();
-	// 	}
-
-	// 	// if (next_start == 0)
-	// 	// {
-	// 	// 	panic_begin 
-	// 	// 		<< "Failed to read (x) position of the point at the line " << line_number 
-	// 	// 		<< " in the file: (" << filepath << ")" << panic_end;
-	// 	// }
-		
-	// 	// y = std::strtod(next_start, &next_start);
-
-	// 	// if (next_start == 0)
-	// 	// {
-	// 	// 	panic_begin 
-	// 	// 		<< "Failed to read (y) position of the point at the line " << line_number 
-	// 	// 		<< " in the file (" << filepath << ")" << panic_end;
-	// 	// }
-
-	// 	readed_points.push_back(Vector2(x, y));
-	// }
-
-	// file_stream.close();
+	if (log_level == Program_Log_Level::Verbose) 
+	{
+		std::cout << "Readed point count: " << readed_points.size() << std::endl;
+	}
 }
 
 
@@ -234,7 +233,23 @@ void Program_Configuration::read()
 	mode = Program_Mode::Algorithm_Execution;
 	log_level = Program_Log_Level::Silent;
 
-	// Defines mode
+
+	// Check for help asking
+	for (int index = 0; index < input.size; index++)
+	{
+		auto *argument = input.array[index];
+
+		if (strcmp(argument, program_arguments_tag::help.c_str()) == 0) 
+		{
+			program::print_help();
+			exit(EXIT_SUCCESS);
+		}
+	}
+
+	// Compulsory action
+	read_points_filepath();
+	
+	// Decisive
 	for (int index = 0; index < input.size; index++)
 	{
 		auto *argument = input.array[index];
@@ -243,7 +258,7 @@ void Program_Configuration::read()
 		{
 			algorithm = new Quick_Hull_Sequential();
 			mode = Program_Mode::Algorithm_Execution;
-			read_points_filepath();
+			read_points();
 			break;
 		}
 		else if (strcmp(argument, program_arguments_tag::points_generation.c_str()) == 0) 
@@ -290,7 +305,7 @@ void Program_Configuration::read()
 	if (!algorithm && mode == Program_Mode::Algorithm_Execution)
 	{
 		algorithm = new Quick_Hull_OpenMP();
-		read_points_filepath();
+		read_points();
 	}
 }
 
@@ -323,6 +338,12 @@ const std::vector<Vector2> & Program_Configuration::get_points() const
 {
 	return readed_points;
 }
+
+const std::string & Program_Configuration::get_points_filepath() const 
+{
+	return points_filepath;
+}
+
 
 Algorithm_Producing_Convex_Hull & Program_Configuration::get_algorithm() const
 {
@@ -362,5 +383,40 @@ namespace program
 		std::cout.flush();
 		stream.str(""); // I hate c++ for this
 		return *this;
+	}
+
+	void print_help()
+	{
+		std::cout
+		<< std::endl
+		<< '\t' << program_arguments_tag::points_filepath 
+			<< " [path] \t -> " << program_arguments_definition::points_filepath 
+			<< std::endl
+		<< '\t' << program_arguments_tag::log_verbose 
+			<< "\t -> " << program_arguments_definition::log_verbose 
+			<< std::endl
+		<< '\t' << program_arguments_tag::log_quiet 
+			<< "\t -> " << program_arguments_definition::log_quiet 
+			<< std::endl
+		<< '\t' << program_arguments_tag::sequential_mode 
+			<< "\t -> " << program_arguments_definition::sequential_mode 
+			<< std::endl
+		<< '\t' << program_arguments_tag::thread_count 
+			<< " [positive interger] \t -> " << program_arguments_definition::thread_count 
+			<< std::endl
+		<< '\t' << program_arguments_tag::points_generation 
+			<< " [method] [count]\t -> " << program_arguments_definition::points_generation 
+			<< std::endl
+		<< '\t' << program_arguments_tag::circle 
+			<< " [outer-radius] [inner-radius] (center-x-offset) (center-y-offset) \t -> " << program_arguments_definition::circle 
+			<< std::endl
+		<< '\t' << program_arguments_tag::points_count 
+			<< " [positive integer] \t -> " << program_arguments_definition::points_count 
+			<< std::endl
+		<< '\t' << program_arguments_tag::help 
+			<< "\t -> " << program_arguments_definition::help 
+			<< std::endl
+		<< std::endl
+		;
 	}
 }

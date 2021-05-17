@@ -24,13 +24,21 @@ namespace quick_hull
 		int point_count = points.size();
 
 		// Finds the most left and right point
-		/// TODO: parallelize the above for loop
+		/// TODO: try parallelize the below for loop
 		// #pragma omp parallel for shared(points)
 		for (int index = 0; index < point_count; index++)
 		{
 			const auto &point = points.at(index);
-			if (point.x > most_right.x) most_right = point;
-			if (point.x < most_left.x)  most_left  = point;
+		
+			if (point.x > most_right.x || (point.x == most_right.x && point.y > most_right.y))
+			{
+				most_right = point;
+			}
+			else
+			if (point.x < most_left.x || (point.x == most_right.x && point.y < most_right.y)) 
+			{
+				most_left  = point;
+			}
 		}
 
 		// Constructs a convex from right and left side of line going through the most left and right points
@@ -40,7 +48,6 @@ namespace quick_hull
 		#pragma omp parallel
 		#pragma omp master
 		{
-
 			#pragma omp task shared(points, convex_hull_left)
 			{
 				convex_hull_left = grow(most_left, most_right, points);
@@ -89,10 +96,14 @@ namespace quick_hull
 		int point_count = points.size();
 
 		// Vector to store the resulted convex hell
-		auto *convex_hull = new std::vector<Vector2>();
+		auto *convex_hull = new std::vector<Vector2>(
+			// point_count
+			);
 
 		// Subsets of the given points, which lays on the conter clockwise normal side of the AB line.
-		auto *relative_points = new std::vector<Vector2>();
+		auto *relative_points = new std::vector<Vector2>(
+			// point_count
+			);
 
 		// auto *dot_products = new std::vector<double>(); 
 			// thread_datas.at(thread_id).dot_products;
@@ -100,7 +111,7 @@ namespace quick_hull
 			// thread_datas.at(thread_id).projection_distances;
 
 
-		#pragma omp simd
+		// #pragma omp simd
 		for (int index = 0; index < point_count; index++)
 		{
 			auto e = points.at(index);
@@ -143,12 +154,19 @@ namespace quick_hull
 			std::vector<Vector2> *convex_hull_left;
 			std::vector<Vector2> *convex_hull_right;
 
-			#pragma omp task shared(convex_hull_left, relative_points)
-			{
-				convex_hull_left  = grow(a, c, *relative_points); // a convex hull from the AC line 
-			}
+			// if (relative_points->size() < 2000) 
+			// {
+			// 	convex_hull_left  = grow(a, c, *relative_points); // a convex hull from the AC line 
+			// }
+			// else 
+			// {
+				#pragma omp task shared(convex_hull_left, relative_points, buffer)
+				{
+					convex_hull_left  = grow(a, c, *relative_points); // a convex hull from the AC line 
+				}
+			// }
 
-			#pragma omp task shared(convex_hull_right, relative_points)
+			// #pragma omp task shared(convex_hull_right, relative_points)
 			{
 				convex_hull_right = grow(c, b, *relative_points); // a convex hull from the CB line
 			}
@@ -169,4 +187,10 @@ namespace quick_hull
 		
 		return convex_hull;
 	}
+
+
+	// 1 main 
+	// 8 threads : for loop
+	// 8 threads : recusrsion and task pooling
+
 }

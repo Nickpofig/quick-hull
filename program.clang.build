@@ -1,7 +1,7 @@
 @Compiling...
 clang++ 
 
--std=c++17
+-std=c++14
 
 --include-directory "./source" 
 
@@ -15,11 +15,10 @@ clang++
 
 -fopenmp
 
--g
+# -O3
 
-# Temporarly turning off these warnings
---define-macro _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+# -g
 
 # -fsanitize=address
 
--o ./quickhull.exe
+-o ./binary/quickhull.exe

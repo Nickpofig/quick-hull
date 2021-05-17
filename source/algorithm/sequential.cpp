@@ -23,8 +23,15 @@ namespace quick_hull
 		// Finds the most left and right point
 		for (const auto &point: points)
 		{
-			if (point.x > most_right.x) most_right = point;
-			if (point.x < most_left.x)  most_left  = point;
+			if (point.x > most_right.x || (point.x == most_right.x && point.y > most_right.y))
+			{
+				most_right = point;
+			}
+			else
+			if (point.x < most_left.x || (point.x == most_right.x && point.y < most_right.y)) 
+			{
+				most_left  = point;
+			}
 		}
 
 		// Constructs a convex from right and left side of line going through the most left and right points
