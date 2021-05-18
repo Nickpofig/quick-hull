@@ -9,8 +9,6 @@
 // internal
 #include "core.hpp"
 #include "algorithm/base.hpp"
-#include "algorithm/sequential.hpp"
-#include "algorithm/openmp.hpp"
 
 using namespace quick_hull;
 
@@ -57,6 +55,13 @@ enum Program_Log_Level
 	Silent,
 	Quiet,
 	Verbose
+};
+
+enum Program_Algorithm_Implementation 
+{
+	Sequential,
+	OpenMP,
+	Cuda,
 };
 
 struct Program_Input 
@@ -132,6 +137,7 @@ struct Program_Configuration
 
 		const Program_Mode & get_program_mode() const;
 		const Program_Log_Level & get_log_level() const;
+		Program_Algorithm_Implementation get_algorithm_implementation_enum() const;
 		const std::vector<Vector2> & get_points() const;
 		const std::string & get_points_filepath() const;
 

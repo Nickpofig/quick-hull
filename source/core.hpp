@@ -18,7 +18,7 @@ namespace quick_hull
 
 		public: // methods
 			Vector2(double x, double y);
-			Vector2() : Vector2(0, 0) { };
+			Vector2() = default;
 
 			// Subtracts other vector from this vector
 			Vector2 operator-(const Vector2 &other);

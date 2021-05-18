@@ -8,6 +8,8 @@
 !LICENSE
 !README.md
 !program.clang.build
+!program.nvcc.build
+!program.gcc.build
 
 # Ignores all binary files
 *.exe

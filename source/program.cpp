@@ -6,6 +6,12 @@
 
 // internal
 #include "program.hpp"
+#include "algorithm/sequential.hpp"
+#include "algorithm/openmp.hpp"
+
+#if __NVCC__
+	#include "algorithm/cuda.hpp"
+#endif
 
 // Points_Generation_Method
 
@@ -282,7 +288,11 @@ void Program_Configuration::read()
 			try 
 			{
 				int number_of_threads = std::stoi(input.array[index]);
+#if _OPENMP
 				omp_set_num_threads(number_of_threads);
+#else
+				program::panic_begin << "Error: could not set number of threads. Reason: application has been compiled without Open MP" << program::panic_end; 
+#endif
 			}
 			catch(std::exception exception)
 			{
@@ -303,7 +313,14 @@ void Program_Configuration::read()
 	// by default uses parallel implementation of the algorithm
 	if (!algorithm && mode == Program_Mode::Algorithm_Execution)
 	{
+#if _OPENMP
 		algorithm = new Quick_Hull_OpenMP();
+#elif __NVCC__
+		algorithm = new Quick_Hull_Cuda();
+#else
+#warning no parallel implementation has been compiled 
+		algorithm = new Quick_Hull_Sequential();
+#endif
 		read_points();
 	}
 }
@@ -357,6 +374,16 @@ Points_Generation_Method & Program_Configuration::get_points_generation_method()
 bool Program_Configuration::is_using_sequential_algorithm() const 
 {
 	return dynamic_cast<Quick_Hull_Sequential *>(algorithm) != nullptr;
+}
+
+Program_Algorithm_Implementation Program_Configuration::get_algorithm_implementation_enum() const
+{
+#if _OPENMP
+	if (dynamic_cast<Quick_Hull_OpenMP *>(algorithm) != nullptr) return Program_Algorithm_Implementation::OpenMP;
+#elif __NVCC__
+	if (dynamic_cast<Quick_Hull_Cuda *>(algorithm) != nullptr) return Program_Algorithm_Implementation::Cuda;
+#endif
+	return Program_Algorithm_Implementation::Sequential;
 }
 
 

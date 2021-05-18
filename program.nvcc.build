@@ -1,0 +1,23 @@
+@Compiling...
+nvcc
+
+-std=c++11
+
+-I"./source" 
+
+./source/main.cpp
+./source/core.cpp
+./source/program.cpp
+./source/algorithm/base.cpp
+./source/algorithm/sequential.cpp
+./source/algorithm/cuda.cu
+
+# -fopenmp
+
+# -O3
+
+# -g
+
+# -fsanitize=address
+
+-o ./binary/quickhull_cuda

@@ -8,7 +8,9 @@
 
 
 // external
+#if _OPENMP
 #include "omp.h"
+#endif
 
 // internal
 #include "core.hpp"
@@ -31,11 +33,19 @@ int main(const int argument_count, const char **arguments)
 
 	if (must_execute_algorithm)
 	{
-		if (!program_config.is_using_sequential_algorithm())
+		switch (program_config.get_algorithm_implementation_enum())
 		{
-			if (log_is_verbose || log_is_quiet) 
+			case Program_Algorithm_Implementation::Sequential: break;
+			case Program_Algorithm_Implementation::Cuda: break;
+			case Program_Algorithm_Implementation::OpenMP:
 			{
-				program::log_begin << "Threads:\t" << omp_get_max_threads() << program::log_end;
+#if _OPENMP
+				if (log_is_verbose || log_is_quiet) 
+				{
+					program::log_begin << "Threads:\t" << omp_get_max_threads() << program::log_end;
+				}
+#endif
+				break;
 			}
 		}
 

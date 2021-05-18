@@ -1,0 +1,23 @@
+@Compiling...
+g++ 
+
+-std=c++11
+
+--include-directory "./source" 
+
+./source/main.cpp
+./source/core.cpp
+./source/program.cpp
+./source/algorithm/base.cpp
+./source/algorithm/sequential.cpp
+./source/algorithm/openmp.cpp
+
+-fopenmp
+
+# -O3
+
+# -g
+
+# -fsanitize=address
+
+-o ./binary/quickhull
