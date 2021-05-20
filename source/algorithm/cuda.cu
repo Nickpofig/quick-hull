@@ -13,12 +13,12 @@
 namespace quick_hull 
 {
 	// Cuda error handling
-	static void cuda_handle_error(cudaError_t error, const char * file, int line) 
+	static void cuda_handle_error(cudaError_t code, const char * file, int line) 
 	{
-		if (error == cudaSuccess) return; 
+		if (code == cudaSuccess) return; 
 		
 		program::panic_begin 
-			<< "Error(" << error << ") in" << file << " at line " << line 
+			<< "Error(" << code << ") in" << file << " at line " << line 
 			<< program::panic_end;
 	}
 
@@ -27,7 +27,7 @@ namespace quick_hull
 
 
 	// Cuda version of vector2 functions
-	__device__ Vector2 cuda_vector_make(const double x, const double y)
+	__device__ Vector2 cuda_vector_make(double x, double y)
 	{
 		Vector2 vector;
 		
@@ -54,7 +54,7 @@ namespace quick_hull
 
 	__device__ double cuda_vector_get_sqr_magnitude(const Vector2& vector) 
 	{
-		return (vector.x * vector.x) + (vector.y + vector.y);
+		return (vector.x * vector.x) + (vector.y * vector.y);
 	}
 	
 	__device__ double cuda_vector_dot_product(const Vector2 &vector_a, const Vector2 &vector_b) 
@@ -83,7 +83,7 @@ namespace quick_hull
 	{
 		public:
 			int farest_point_index;
-			int farest_point_sqr_distance;
+			double farest_point_sqr_distance;
 	};
 
 	__global__
@@ -92,8 +92,8 @@ namespace quick_hull
 		int* result_point_index, // only the first thread in a block has write access
 		const Vector2* points, 
 		int point_count, 
-		Vector2 line_point_a, 
-		Vector2 line_point_b
+		int line_point_a_index, 
+		int line_point_b_index
 	)
 	{
 		// Declares dynamic(or not) shared memory
@@ -123,19 +123,25 @@ namespace quick_hull
 			points_end = point_count;
 		}
 
-		double thread_farest_point_sqr_distance = ~0; // must be the minimum number in two's complement system
-		int thread_farest_point_index = points_start;
+		double thread_farest_point_sqr_distance = 0;
+		int thread_farest_point_index = line_point_a_index;
+
+		Vector2 line_point_a = points[line_point_a_index];
+		Vector2 line_point_b = points[line_point_b_index];
 
 		for(int point_index = points_start; point_index < points_end; point_index++) 
 		{
 			Vector2 point = points[point_index];
-			Vector2 line = cuda_vector_subtract(line_point_a, line_point_b);
+			Vector2 line = cuda_vector_subtract(line_point_b, line_point_a);
 			Vector2 line_normal = cuda_vector_get_normal(line);
 
 			// projected-point on the line from the current point
-			Vector2 projection_base = cuda_vector_project(
-				cuda_vector_subtract(point, line_point_a), 
-				cuda_vector_add(line, line_point_a)
+			Vector2 projection_base = cuda_vector_add(
+				cuda_vector_project(
+					cuda_vector_subtract(point, line_point_a), 
+					line
+				),
+				line_point_a 
 			); 
 
 			// projection (as vector) from the base to the point
@@ -144,12 +150,7 @@ namespace quick_hull
 			double relativity = cuda_vector_dot_product(projection, line_normal);
 			double projection_sqr_magnitude = cuda_vector_get_sqr_magnitude(projection);
 
-			if (relativity < 0)
-			{
-				projection_sqr_magnitude = -projection_sqr_magnitude;
-			}
-			
-			if (thread_farest_point_sqr_distance < projection_sqr_magnitude) 
+			if (relativity > 0 && thread_farest_point_sqr_distance < projection_sqr_magnitude)
 			{
 				thread_farest_point_sqr_distance = projection_sqr_magnitude;
 				thread_farest_point_index = point_index;
@@ -186,65 +187,59 @@ namespace quick_hull
 	// Finds farest point from a given line
 	// Add the point to convex hull
 
+	template<int T_Block_Count, int T_Thread_Count>
 	void grow
 	(
-		Vector2 a, 
-		Vector2 b, 
+		int point_a_index, 
+		int point_b_index, 
 		const std::vector<Vector2> & points,
-		std::vector<Vector2> * convex_hull
+		std::vector<Vector2> * convex_hull,
+		Vector2* device_points_copy,
+		int* host_far_points,
+		int* device_far_points
 	)
 	{
-		int* host_far_points;
-		int* device_far_points;
-		Vector2* device_points_copy;
-
-		size_t far_points_memsize = 1 * sizeof(int);
-		size_t points_memsize = points.size() * sizeof(Vector2);
-
-
-		program::log_begin << "Allocating device and host memory... points memsize: " << points_memsize << "." << program::log_end;
-
-		macro_cuda_call(cudaHostAlloc((void**) &host_far_points, far_points_memsize, cudaHostAllocDefault));
-		macro_cuda_call(cudaMalloc((void**) &device_far_points, far_points_memsize));
-		macro_cuda_call(cudaMalloc((void**) &device_points_copy, points_memsize));
-
-		macro_cuda_call(cudaMemcpy(device_points_copy, points.data(), points_memsize, cudaMemcpyHostToDevice));
-
-
-		program::log_begin << "Executing kernel..." << program::log_end;
-
-		find_farest_point_from_line<<<1, 1024
-		//, 1024
-		>>>
+		find_farest_point_from_line<<<T_Block_Count, T_Thread_Count>>>
 		(
 			device_far_points,
 			device_points_copy,
 			points.size(),
-			a,
-			b
+			point_a_index, 
+			point_b_index
 		);
 
 		macro_cuda_call(cudaDeviceSynchronize());
+
+		size_t far_points_memsize = 1 * sizeof(int);
 		macro_cuda_call(cudaMemcpy(host_far_points, device_far_points, far_points_memsize, cudaMemcpyDeviceToHost));
 
-		program::log_begin << "Reading result point..." << program::log_end;
+		int point_c_index = host_far_points[0];
 
-		Vector2 c = points.at(host_far_points[0]);
-
-		macro_cuda_call(cudaFreeHost(host_far_points));
-		macro_cuda_call(cudaFree(device_far_points));
-		macro_cuda_call(cudaFree(device_points_copy));
-
-		if (c != a && c != b)
+		if (point_c_index != point_a_index && point_c_index != point_b_index)
 		{
-			program::log_begin << "Growing convex hull left..." << program::log_end;
-			grow(a, c, points, convex_hull); // a convex hull from the AC line 
+			// a convex hull from the AC line 
+			grow<T_Block_Count, T_Thread_Count>(
+				point_a_index, 
+				point_c_index, 
+				points, 
+				convex_hull, 
+				device_points_copy,
+				host_far_points,
+				device_far_points
+			); 
 
-			program::log_begin << "Adding convex hull point..." << program::log_end;
-			convex_hull->push_back(c);
+			convex_hull->push_back(points[point_c_index]);
 
-			program::log_begin << "Growing convex hull right..." << program::log_end;
-			grow(c, b, points, convex_hull); // a convex hull from the CB line
+			// a convex hull from the CB line
+			grow(
+				point_c_index, 
+				point_b_index, 
+				points, 
+				convex_hull
+				device_points_copy,
+				host_far_points,
+				device_far_points
+			); 
 		}
 	}
 
@@ -255,29 +250,69 @@ namespace quick_hull
 
 	std::vector<Vector2> * Quick_Hull_Cuda::run(const std::vector<Vector2> &points)
 	{
-		Vector2 most_left  = points.front();
-		Vector2 most_right = points.back();
+		int most_left_index  = 0;
+		int most_right_index = points.size() - 1;
 		
 		// Finds the most left and right point
-		for (const auto &point: points)
+		for (int index = 0; index < points.size(); index++)
 		{
+			const auto point = points[index];
+			const auto most_right = points[most_right_index];
+			const auto most_left = points[most_left_index];
+
 			if (point.x > most_right.x || (point.x == most_right.x && point.y > most_right.y))
 			{
-				most_right = point;
+				most_right_index = index;
 			}
 			else
 			if (point.x < most_left.x || (point.x == most_right.x && point.y < most_right.y)) 
 			{
-				most_left  = point;
+				most_left_index = index;
 			}
 		}
 
-		// Convex hull 
 		auto *convex_hull = new std::vector<Vector2>();
 
+		// Initializes cuda working memory
+		size_t far_points_memsize = 1 * sizeof(int);
+		size_t points_memsize = points.size() * sizeof(Vector2);
+
+		macro_cuda_call(cudaHostAlloc((void**) &host_far_points, far_points_memsize, cudaHostAllocDefault));
+		macro_cuda_call(cudaMalloc((void**) &device_far_points, far_points_memsize));
+		macro_cuda_call(cudaMalloc((void**) &device_points_copy, points_memsize));
+		macro_cuda_call(cudaMemcpy(device_points_copy, points.data(), points_memsize, cudaMemcpyHostToDevice));
+
+
 		// Constructs a convex from right and left side of line going through the most left and right points
-		grow(most_left, most_right, points, convex_hull);
-		grow(most_right, most_left, points, convex_hull);
+
+		convex_hull->push_back(points[most_left_index]);
+		
+		grow<>(
+			most_left_index, 
+			most_right_index, 
+			points, 
+			convex_hull, 
+			device_points_copy,
+			host_far_points,
+			device_far_points
+		);
+		
+		convex_hull->push_back(points[most_right_index]);
+		
+		grow(
+			most_right_index, 
+			most_left_index,
+			points, 
+			convex_hull, 
+			device_points_copy,
+			host_far_points,
+			device_far_points
+		);
+
+
+		macro_cuda_call(cudaFreeHost(host_far_points));
+		macro_cuda_call(cudaFree(device_far_points));
+		macro_cuda_call(cudaFree(device_points_copy));
 
 		return convex_hull;
 	}

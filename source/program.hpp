@@ -27,13 +27,16 @@ namespace program_arguments_tag
 	static const std::string points_count      = "--count";
 	static const std::string circle            = "--circle";
 	static const std::string circle_center     = "--circle-center";
+
+	static const std::string cuda_block_power  = "--cuda-block-power"; 
+	static const std::string cuda_thread_power = "--cuda-thread-power";
 };
 
 namespace program_arguments_definition 
 {
 	static const std::string help              = "Prints this information. [] - compulsory, () - optional parameter value.";
 	static const std::string points_filepath   = "Sets points filepath.";
-	static const std::string log_verbose        = "Sets log level: all.";
+	static const std::string log_verbose       = "Sets log level: all.";
 	static const std::string log_quiet         = "Sets log level: minimum";
 
 	static const std::string sequential_mode   = "Marks that program will use sequential version of the Quickhull algorithm.";
@@ -81,6 +84,7 @@ struct Points_Generation_Method
 		int count;
 
 	public: // methods
+
 		Points_Generation_Method
 		(
 			Program_Input input,
@@ -90,6 +94,7 @@ struct Points_Generation_Method
 		virtual ~Points_Generation_Method() { }
 
 		virtual bool find() = 0;
+		virtual void log() = 0;
 		virtual std::vector<Vector2> * execute() const = 0;
 };
 
@@ -106,6 +111,7 @@ struct Circle_Points_Generation_Method : Points_Generation_Method
 
 		std::vector<Vector2> * execute() const override;
 		bool find() override;
+		void log() override;
 	
 	private:
 		void read_double(double *store);

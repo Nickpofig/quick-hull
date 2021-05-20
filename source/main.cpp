@@ -78,6 +78,11 @@ int main(const int argument_count, const char **arguments)
 		
 		size_t convex_hull_hash;
 
+		if (log_is_silent) // prints number of points
+		{
+			program::log_begin << convex_hull->size() << program::log_end;
+		}
+
 		for (int index = 0, ch_size = convex_hull->size(); index < ch_size; index++)
 		{
 			auto &point = convex_hull->at(index);
@@ -86,7 +91,7 @@ int main(const int argument_count, const char **arguments)
 			{
 				program::log_begin << "\t{ x: " << point.x << ", y: " << point.y << " }" << program::log_end;
 			}
-			else if (log_is_silent) // silent
+			else if (log_is_silent) // prints point coordinates
 			{
 				program::log_begin << point.x << " " << point.y << program::log_end;
 			}
@@ -98,12 +103,13 @@ int main(const int argument_count, const char **arguments)
 
 		if (log_is_quiet)
 		{
-			program::log_begin << "Result hash: " << convex_hull_hash << program::log_end;
+			program::log_begin << "Result hash: " << convex_hull_hash << "." << program::log_end;
 		}
 
 		// Prints runtime
 		if (log_is_verbose || log_is_quiet) 
 		{
+			program::log_begin << "Convex hull: " << convex_hull->size() << "." << program::log_end;
 			program::log_begin << "Runtime: " 
 				<< std::chrono::duration<double, std::milli>(stopwatch_end - stopwatch_start).count() 
 				// << stopwatch_end - stopwatch_start
@@ -112,6 +118,11 @@ int main(const int argument_count, const char **arguments)
 	}
 	else 
 	{
+		if (log_is_verbose || log_is_quiet) 
+		{
+			program_config.get_points_generation_method().log();
+		}
+
 		program_config.generate_and_write_points();
 	}
 

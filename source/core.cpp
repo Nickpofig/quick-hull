@@ -8,6 +8,7 @@
 
 // internal
 #include "core.hpp"
+#include "program.hpp"
 
 namespace quick_hull 
 {
@@ -124,22 +125,24 @@ namespace quick_hull
 	{
 		std::random_device random_device;
 		std::mt19937 generator(random_device());
-		std::uniform_real_distribution<double> distribution(-1.0, 1.0);
+		std::uniform_real_distribution<double> position_distribution(-1.0, 1.0);
+		std::uniform_real_distribution<double> distance_distribution(0.0, 1.0);
 
 		auto points = new std::vector<Vector2>();
+
 
 		for (int index = 0; index < count; index++) 
 		{
 			// Creates random vector
-			auto random_x = distribution(generator);
-			auto random_y = distribution(generator);
+			auto random_x = position_distribution(generator);
+			auto random_y = position_distribution(generator);
 			auto random_vector = Vector2(random_x, random_y).get_normalized();
 
-			auto radius_range = outer_radius - inner_radius;
+			auto distance = ((outer_radius - inner_radius) * distance_distribution(generator)) + inner_radius;
 
 			// Scales vector based on outer and inner radius, and shifts by center coordinates
-			random_vector.x = (random_vector.x * radius_range) + inner_radius + center.x;
-			random_vector.y = (random_vector.y * radius_range) + inner_radius + center.y;
+			random_vector.x = (random_vector.x * distance) + center.x;
+			random_vector.y = (random_vector.y * distance) + center.y;
 
 			points->push_back(random_vector);
 		}

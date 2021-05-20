@@ -64,6 +64,17 @@ Circle_Points_Generation_Method::Circle_Points_Generation_Method
 	}
 }
 
+void Circle_Points_Generation_Method::log()
+{
+	program::log_begin
+		<< "Generation Method: Circle." 
+		<< "\nCount: " << this->count << "."
+		<< "\nCenter: (x:" << this->center_point.x << ", y:" << this->center_point.y << ")."
+		<< "\nInner Radius: " << this->inner_radius << "."
+		<< "\nOuter Radius: " << this->outer_radius << "."
+		<< program::log_end;
+}
+
 void Circle_Points_Generation_Method::read_double(double *store)
 {
 	try 
@@ -317,6 +328,23 @@ void Program_Configuration::read()
 		algorithm = new Quick_Hull_OpenMP();
 #elif __NVCC__
 		algorithm = new Quick_Hull_Cuda();
+		auto cuda_algorithm = (Quick_Hull_Cuda & )(&algorithm);
+		
+		for (int index = 0; index < input.size; index++)
+		{
+			auto *argument = input.array[index];
+
+			if (strcmp(argument, program_arguments_tag::cuda_block_power) == 0)
+			{
+				cuda_algorithm.block_power = program::read_double();
+				break;
+			}
+			else if (strcmp(argument, program_arguments_tag::points_generation.c_str()) == 0) 
+			{
+				read_points_generation_method(index + 1);
+				break;
+			}
+		}
 #else
 #warning no parallel implementation has been compiled 
 		algorithm = new Quick_Hull_Sequential();
