@@ -11,13 +11,13 @@
 
 namespace quick_hull 
 {
-	Quick_Hull_OpenMP::~Quick_Hull_OpenMP() 
+	Algorithm_OpenMP::~Algorithm_OpenMP() 
 	{
 
 	}
 
 
-	std::vector<Vector2> * Quick_Hull_OpenMP::run(const std::vector<Vector2> &points)
+	std::vector<Vector2> * Algorithm_OpenMP::run(const std::vector<Vector2> &points)
 	{
 		// Convex hull 
 		auto *convex_hull = new std::vector<Vector2>();
@@ -73,7 +73,7 @@ namespace quick_hull
 	}
 
 
-	std::vector<Vector2> * Quick_Hull_OpenMP::grow
+	std::vector<Vector2> * Algorithm_OpenMP::grow
 	(
 		Vector2 a, 
 		Vector2 b, 
@@ -110,10 +110,10 @@ namespace quick_hull
 		for (int index = 0; index < point_count; index++)
 		{
 			auto e = points.at(index);
-			Vector2 d = project(e - a, ab) + a; // projection of the point E
+			Vector2 d = Vector2::project(e - a, ab) + a; // projection of the point E
 			Vector2 de = e - d;                 // projection (as vector) from the point D to E
 
-			double relativity = dot_product(de, ab_normal);
+			double relativity = Vector2::dot_product(de, ab_normal);
 			double projection_sqr_magnitude = de.get_sqr_magnitude();
 
 			if (relativity > 0)

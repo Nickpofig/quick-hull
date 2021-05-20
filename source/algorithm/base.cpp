@@ -7,7 +7,7 @@
 
 namespace quick_hull 
 {
-	Algorithm_Producing_Convex_Hull::~Algorithm_Producing_Convex_Hull()
+	Algorithm::~Algorithm()
 	{
 	}
 }

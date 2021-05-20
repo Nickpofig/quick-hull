@@ -7,7 +7,7 @@
 
 // internal
 #include "core.hpp"
-#include "program.hpp"
+#include "console.hpp"
 #include "algorithm/cuda.hpp"
 
 namespace quick_hull 
@@ -89,7 +89,7 @@ namespace quick_hull
 	__global__
 	void find_farest_point_from_line
 	(
-		int* result_point_index, // only the first thread in a block has write access
+		Cuda_Thread_Data* result_point_index, // only the first thread in a block has write access
 		const Vector2* points, 
 		int point_count, 
 		int line_point_a_index, 
@@ -177,9 +177,13 @@ namespace quick_hull
 			__syncthreads();
 		}
 
-		if (thread_id == 0) 
+		if (thread_id == 0)
 		{
-			result_point_index[block_id] = block_data[0].farest_point_index;
+			auto* copy_to   = &result_point_index[block_id];
+			auto* copy_from = &block_data[0];
+
+			copy_to->farest_point_index        = copy_from->farest_point_index;
+			copy_to->farest_point_sqr_distance = copy_from->farest_point_sqr_distance;
 		}
 	}
 
@@ -195,8 +199,20 @@ namespace quick_hull
 		const std::vector<Vector2> & points,
 		std::vector<Vector2> * convex_hull,
 		Vector2* device_points_copy,
-		int* host_far_points,
-		int* device_far_points
+		Cuda_Thread_Data* host_far_points,
+		Cuda_Thread_Data* device_far_points
+	);
+
+	template<int T_Block_Count, int T_Thread_Count>
+	void grow
+	(
+		int point_a_index, 
+		int point_b_index, 
+		const std::vector<Vector2> & points,
+		std::vector<Vector2> * convex_hull,
+		Vector2* device_points_copy,
+		Cuda_Thread_Data* host_far_points,
+		Cuda_Thread_Data* device_far_points
 	)
 	{
 		find_farest_point_from_line<<<T_Block_Count, T_Thread_Count>>>
@@ -210,10 +226,25 @@ namespace quick_hull
 
 		macro_cuda_call(cudaDeviceSynchronize());
 
-		size_t far_points_memsize = 1 * sizeof(int);
+		size_t far_points_memsize = T_Block_Count * sizeof(Cuda_Thread_Data);
 		macro_cuda_call(cudaMemcpy(host_far_points, device_far_points, far_points_memsize, cudaMemcpyDeviceToHost));
 
-		int point_c_index = host_far_points[0];
+		for (int step = 1; step < T_Block_Count; step <<= 1) 
+		{
+			for (int index = 0; index < T_Block_Count; index += (step << 1)) 
+			{
+				auto* recepient = &host_far_points[index];
+				auto* donor = &host_far_points[index + step];
+
+				if (recepient->farest_point_sqr_distance < donor->farest_point_sqr_distance)
+				{
+					recepient->farest_point_index = donor->farest_point_index;
+					recepient->farest_point_sqr_distance = donor->farest_point_sqr_distance;
+				}
+			}
+		}
+
+		int point_c_index = host_far_points[0].farest_point_index;
 
 		if (point_c_index != point_a_index && point_c_index != point_b_index)
 		{
@@ -231,11 +262,11 @@ namespace quick_hull
 			convex_hull->push_back(points[point_c_index]);
 
 			// a convex hull from the CB line
-			grow(
+			grow<T_Block_Count, T_Thread_Count>(
 				point_c_index, 
 				point_b_index, 
 				points, 
-				convex_hull
+				convex_hull,
 				device_points_copy,
 				host_far_points,
 				device_far_points
@@ -243,12 +274,11 @@ namespace quick_hull
 		}
 	}
 
-
-
-
-	Quick_Hull_Cuda::~Quick_Hull_Cuda() { }
-
-	std::vector<Vector2> * Quick_Hull_Cuda::run(const std::vector<Vector2> &points)
+	template<int T_Block_Count, int T_Thread_Count>
+	std::vector<Vector2> * algorithm_internal_run
+	(
+		const std::vector<Vector2> &points
+	)
 	{
 		int most_left_index  = 0;
 		int most_right_index = points.size() - 1;
@@ -274,8 +304,13 @@ namespace quick_hull
 		auto *convex_hull = new std::vector<Vector2>();
 
 		// Initializes cuda working memory
-		size_t far_points_memsize = 1 * sizeof(int);
+		Vector2          * device_points_copy;
+		Cuda_Thread_Data * device_far_points;
+		Cuda_Thread_Data * host_far_points;
+		
+		size_t far_points_memsize = (T_Block_Count) * sizeof(Cuda_Thread_Data);
 		size_t points_memsize = points.size() * sizeof(Vector2);
+
 
 		macro_cuda_call(cudaHostAlloc((void**) &host_far_points, far_points_memsize, cudaHostAllocDefault));
 		macro_cuda_call(cudaMalloc((void**) &device_far_points, far_points_memsize));
@@ -287,7 +322,7 @@ namespace quick_hull
 
 		convex_hull->push_back(points[most_left_index]);
 		
-		grow<>(
+		grow<T_Block_Count, T_Thread_Count>(
 			most_left_index, 
 			most_right_index, 
 			points, 
@@ -299,7 +334,7 @@ namespace quick_hull
 		
 		convex_hull->push_back(points[most_right_index]);
 		
-		grow(
+		grow<T_Block_Count, T_Thread_Count>(
 			most_right_index, 
 			most_left_index,
 			points, 
@@ -315,6 +350,41 @@ namespace quick_hull
 		macro_cuda_call(cudaFree(device_points_copy));
 
 		return convex_hull;
+	}
+
+
+
+
+	Algorithm_Cuda::~Algorithm_Cuda() { }
+
+	std::vector<Vector2> * Algorithm_Cuda::run(const std::vector<Vector2> &points)
+	{
+		switch(this->block_power) 
+		{
+			// x1
+			case 0 : return algorithm_internal_run<1,1024>(points);
+			// x2
+			case 1 : return algorithm_internal_run<2,512>(points);
+			// x4
+			case 2 : return algorithm_internal_run<4,256>(points);
+			// x8
+			case 3 : return algorithm_internal_run<8,128>(points);
+			// x16
+			default:
+			case 4 : return algorithm_internal_run<16,64>(points);
+			// x32
+			case 5 : return algorithm_internal_run<32,32>(points); 
+			// x64
+			case 6 : return algorithm_internal_run<64,16>(points); 
+			// x128
+			case 7 : return algorithm_internal_run<128,8>(points);
+			// x256
+			case 8 : return algorithm_internal_run<256,4>(points);
+			// x512
+			case 9 : return algorithm_internal_run<512,2>(points);
+			// x1024
+			case 10: return algorithm_internal_run<1024,1>(points);
+		}
 	}
 }
 

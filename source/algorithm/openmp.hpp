@@ -5,14 +5,14 @@
 
 // internal
 #include "core.hpp"
-#include "algorithm/base.hpp"
+#include "./base.hpp"
 
 namespace quick_hull 
 {
-	struct Quick_Hull_OpenMP : public Algorithm_Producing_Convex_Hull
+	struct Algorithm_OpenMP : public Algorithm
 	{
 		public: // methods
-			~Quick_Hull_OpenMP();
+			~Algorithm_OpenMP();
 
 			std::vector<Vector2> * run(const std::vector<Vector2> &points) override;
 		private: // methods

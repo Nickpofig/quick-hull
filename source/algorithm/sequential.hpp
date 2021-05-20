@@ -7,15 +7,15 @@
 
 // internal
 #include "core.hpp"
-#include "algorithm/base.hpp"
+#include "./base.hpp"
 
 namespace quick_hull
 {
 	// Sequential implementation of the quick hull algorithm
-	struct Quick_Hull_Sequential : public Algorithm_Producing_Convex_Hull
+	struct Algorithm_Sequential : public Algorithm
 	{
 		public: // methods
-			~Quick_Hull_Sequential();
+			~Algorithm_Sequential();
 
 			std::vector<Vector2> * run(const std::vector<Vector2> &points) override;
 

@@ -6,18 +6,29 @@ clang++
 --include-directory "./source" 
 
 ./source/main.cpp
+./source/io.cpp
 ./source/core.cpp
-./source/program.cpp
+./source/console.cpp
+./source/input_configuration.cpp
+
 ./source/algorithm/base.cpp
-./source/algorithm/sequential.cpp
 ./source/algorithm/openmp.cpp
+./source/algorithm/sequential.cpp
+
+./source/program/constants.cpp
+./source/program/config_program.cpp
+./source/program/config_computing.cpp
+./source/program/config_generation.cpp
+./source/program/config_generation_method.cpp
+
+./source/program/algorithm/config_openmp.cpp
+./source/program/algorithm/config_sequential.cpp
 
 -fopenmp
 
-# -O3
+-O3
 
 # -g
-
 # -fsanitize=address
 
 -o ./binary/quickhull.exe

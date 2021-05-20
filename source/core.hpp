@@ -31,17 +31,9 @@ struct Vector2
 		Vector2 get_normalized() const;
 
 		void normalize();
+
+	public: // static methods
+		static double  sqr_distance(const Vector2 &point_a , const Vector2 &point_b);
+		static double  dot_product (const Vector2 &vector_a, const Vector2 &vector_b);
+		static Vector2 project     (const Vector2 &vector_a, const Vector2 &vector_b); 
 };
-
-
-extern double  sqr_distance(const Vector2 &point_a , const Vector2 &point_b);
-extern double  dot_product (const Vector2 &vector_a, const Vector2 &vector_b);
-extern Vector2 project     (const Vector2 &vector_a, const Vector2 &vector_b); 
-
-extern std::vector<Vector2> * generate_points_in_circle
-(
-	int count, 
-	Vector2 center, 
-	double outer_radius, 
-	double inner_radius
-);
