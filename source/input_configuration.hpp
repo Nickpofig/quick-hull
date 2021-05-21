@@ -42,6 +42,6 @@ namespace program
 			bool is_argument(std::string value) const;
 			std::string get_argument_as_string() const;
 			int get_argument_as_int() const;
-			int get_argument_as_double() const;
+			double get_argument_as_double() const;
 	};
 }

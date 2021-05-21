@@ -3,12 +3,20 @@
 
 // internal
 #include "io.hpp"
+#include "console.hpp"
 
 namespace program 
 {
 	void read_points(std::string filepath, std::vector<Vector2> & points)
 	{
 		std::ifstream input(filepath, std::ios::in | std::ios::binary);
+
+		if (input.fail())
+		{
+			program::panic_begin 
+				<< "Panic: could not open file at path: " << filepath << "." 
+				<< program::panic_end;
+		}
 
 		int point_count;
 

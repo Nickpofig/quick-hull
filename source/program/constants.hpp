@@ -43,7 +43,7 @@ namespace program_arguments_definition
 	static const std::string generate_circle   = "Sets the points generation method: Circle, with outer and inner radius specified.";
 
 	static const std::string cuda              = "Marks that program will use CUDA version of the Quickhull algorithm.";
-	static const std::string cuda_block_power  = "Sets order of power of block number.";
+	static const std::string cuda_block_power  = "Sets order of power of block number [0..10].";
 	static const std::string cuda_thread_power = "Sets order of power of thread number.";
 }
 

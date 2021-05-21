@@ -46,20 +46,16 @@ namespace program
 			}
 		}
 
-		this->block_power = std::min(10, std::max(0, this->block_power));
+		if (this->block_power != -1) 
+		{
+			this->block_power = std::min(10, std::max(0, this->block_power));
+		}
+
+		this->algorithm = new quick_hull::Algorithm_Cuda(this->block_power);
 
 		return is_there_cuda_flag;
 	}
 
-	quick_hull::Algorithm * Algorithm_Configuration_Cuda::create_executor_instance() const 
-	{
-		auto result = new quick_hull::Algorithm_Cuda();
-		
-		result->block_power = this->block_power;
-		result->thread_power = this->thread_power;
-
-		return result;
-	}
 
 	std::string Algorithm_Configuration_Cuda::get_info_text() const 
 	{
@@ -71,6 +67,26 @@ namespace program
 			<< ", threads: " 
 			<< (1 << std::max(0, 10 - this->block_power)) 
 			<< "}";
+
+		return builder.str();
+	}
+
+
+	std::string Algorithm_Configuration_Cuda::get_runtime_info_text() const 
+	{
+		std::ostringstream builder;
+
+		if (auto * algorithm_cuda = dynamic_cast<quick_hull::Algorithm_Cuda * >(this->algorithm)) 
+		{
+			builder 
+				<< "{ " 
+				<< "\n\t kernel: " << algorithm_cuda->get_kernel_total_time() << " ms"
+				<< "\n\t cuda memcpy: " << algorithm_cuda->get_cuda_memcpy_total_time() << " ms"
+				<< "\n\t reduction: " << algorithm_cuda->get_reduction_total_time() << " ms"
+				<< "\n\t cuda meminit: " << algorithm_cuda->get_cuda_meminit_total_time() << " ms"
+				<< "\n\t recursion calls: " << algorithm_cuda->get_total_recursion_call_count()
+				<< "\n }";
+		}
 
 		return builder.str();
 	}

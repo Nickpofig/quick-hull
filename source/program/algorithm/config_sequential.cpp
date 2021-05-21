@@ -13,12 +13,8 @@ namespace program
 		bool allow_panic
 	)
 	{
+		this->algorithm = new quick_hull::Algorithm_Sequential();
 		return true;
-	}
-
-	quick_hull::Algorithm * Algorithm_Configuration_Sequential::create_executor_instance() const 
-	{
-		return new quick_hull::Algorithm_Sequential();
 	}
 
 	std::string Algorithm_Configuration_Sequential::get_info_text() const 

@@ -14,6 +14,5 @@ namespace program
 		public: // ..methods
 			std::string get_info_text() const override;
 			bool try_initialize(Input_Configuration input, bool allow_panic) override;
-			quick_hull::Algorithm * create_executor_instance() const override;
 	};
 }

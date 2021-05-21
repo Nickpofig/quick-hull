@@ -66,20 +66,36 @@ namespace program
 	int Input_Configuration_Iterator::get_argument_as_int() const 
 	{
 		std::string result;
+		int number;
 
-		/// TODO: add warning for fail case
-		input.get_string(index, result); 
+		try 
+		{
+			input.get_string(index, result); 
+			number = std::stoi(result);
+		}
+		catch(std::exception exception) 
+		{
+			program::panic_begin << "Parsing arument (" << result << ") to integer failed because of.." << exception.what() << "." << panic_end;
+		}
 
-		return std::stoi(result);
+		return number;
 	}
 
-	int Input_Configuration_Iterator::get_argument_as_double() const 
+	double Input_Configuration_Iterator::get_argument_as_double() const 
 	{
 		std::string result;
+		double number;
 
-		/// TODO: add warning for fail case
-		input.get_string(index, result); 
+		try 
+		{
+			input.get_string(index, result); 
+			number = std::stod(result);
+		}
+		catch(std::exception exception) 
+		{
+			program::panic_begin << "Parsing arument (" << result << ") to double failed because of.." << exception.what() << "." << panic_end;
+		}
 
-		return std::stod(result);
+		return number;
 	}
 }

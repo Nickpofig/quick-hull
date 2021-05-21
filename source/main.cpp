@@ -18,8 +18,6 @@ int main(const int argument_count, const char **arguments)
 	// Gets program parameters (if any)
 	program::Configuration_Program configuration;
 
-	// program::log_begin << "main 1." << program::log_end;
-
 	configuration.try_initialize(program::Input_Configuration(argument_count, arguments), true);
 	configuration.execute_application();
 

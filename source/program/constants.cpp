@@ -35,12 +35,12 @@ namespace program
 		<< '\t' << program_arguments_tag::cuda_block_power 
 			<< "\t -> " << program_arguments_definition::cuda_block_power 
 			<< std::endl
-		<< '\t' << program_arguments_tag::cuda_thread_power 
-			<< "\t -> " << program_arguments_definition::cuda_thread_power 
-			<< std::endl
+		// << '\t' << program_arguments_tag::cuda_thread_power 
+		// 	<< "\t -> " << program_arguments_definition::cuda_thread_power 
+		// 	<< std::endl
 			
 		<< '\t' << program_arguments_tag::generate_circle 
-			<< " [outer-radius] [inner-radius] (center-x-offset) (center-y-offset) \t -> " << program_arguments_definition::generate_circle 
+			<< " [outer-radius] [inner-radius] \t -> " << program_arguments_definition::generate_circle 
 			<< std::endl
 		<< '\t' << program_arguments_tag::generate_size 
 			<< " [positive integer] \t -> " << program_arguments_definition::generation_size 
@@ -48,6 +48,12 @@ namespace program
 
 		<< '\t' << program_arguments_tag::help 
 			<< "\t -> " << program_arguments_definition::help 
+			<< std::endl
+
+		<< "\n\tExamples:"
+		   "\n\t(Seq)    : ./quickhull --file [path] --log-quiet"
+		   "\n\t(Open MP): ./quickhull --file [path] --log-quiet --openmp --openmp-threads 4"
+		   "\n\t(CUDA)   : ./quickhull_cuda --file [path] --log-quiet --cuda --cuda-block-power 3"
 			<< std::endl
 
 		<< std::endl;

@@ -1,3 +1,6 @@
+// standard
+#include <chrono>
+
 // internal
 #include "io.hpp"
 #include "./config_program.hpp"
@@ -60,11 +63,15 @@ namespace program
 		return true;
 	}
 
+
 	void Configuration_Program::execute_application() const
 	{
 		bool log_is_quiet = this->log_mode == Log_Mode::Quiet;
 		bool log_is_verbose = this->log_mode == Log_Mode::Verbose;
 
+
+		// Captures program start time
+		auto stopwatch_start = std::chrono::steady_clock::now();
 
 		if (auto application_points_generation = dynamic_cast<Application_Configuration_Points_Generation*>(application)) 
 		{
@@ -98,17 +105,18 @@ namespace program
 		{
 			std::vector<Vector2> convex_hull;
 			double ellapsed_milliseconds;
-
+			std::ostringstream detail_info;
 
 			// Prints algorithm parallelization method
 			if(log_is_verbose || log_is_quiet) 
 			{
 				program::log_begin
 					<< "Method: " << application_computing->get_algorithm_config()->get_info_text() << "."
+					<< "\nPoints: " << application_computing->get_point_count() << "."
 					<< program::log_end;
 			}
 
-			application_computing->compute_convex_hull(convex_hull, ellapsed_milliseconds);
+			application_computing->compute_convex_hull(convex_hull, ellapsed_milliseconds, detail_info);
 
 			// Prints number of points
 			if(log_is_verbose || log_is_quiet)
@@ -150,11 +158,35 @@ namespace program
 			// Prints runtime
 			if (log_is_verbose || log_is_quiet) 
 			{
+				auto details = detail_info.str();
+
+				if (details.empty()) 
+				{
+					details = "{ }";
+				}
+
 				program::log_begin
 					<< "Result hash: " << convex_hull_hash << "." 
-					<< "\nEllapsed time: " << ellapsed_milliseconds << " milliseconds."
+					<< "\nAlgorithm time: " << ellapsed_milliseconds << " milliseconds."
+					<< "\nDetails: " << details << "."
 					<< program::log_end;
 			}
+		}
+
+
+		// Captures program end time
+		if (log_is_verbose || log_is_quiet) 
+		{
+			auto stopwatch_end = std::chrono::steady_clock::now();
+			double program_ellapsed_milliseconds = std::chrono::duration<double, std::milli>
+			(
+				stopwatch_end - stopwatch_start
+			)
+			.count();
+
+			program::log_begin
+				<< "Total time: " << program_ellapsed_milliseconds << " milliseconds."
+				<< program::log_end;
 		}
 	}
 }
